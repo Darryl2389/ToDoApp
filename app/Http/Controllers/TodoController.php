@@ -2,7 +2,7 @@
 # @Author: Darryl Sullivan
 # @Date:   2019-10-01T13:58:39+01:00
 # @Last modified by:   Darryl Sullivan
-# @Last modified time: 2019-10-01T15:45:07+01:00
+# @Last modified time: 2019-10-08T13:50:39+01:00
 
 
 
@@ -21,7 +21,7 @@ class TodoController extends Controller
      */
     public function index()
     {
-        $todos = Todo::orderBy('create_at', 'desc')->paginate(8);
+        $todos = Todo::orderBy('created_at', 'desc')->paginate(8);
         return view ('todos.index', [
           'todos' => $todos,
         ]);
@@ -76,7 +76,8 @@ class TodoController extends Controller
      */
     public function show($id)
     {
-        //
+        $todo = Todo::findOrFail($id);
+        return view ('todos.show', ['todo' => $todo]);
     }
 
     /**
@@ -87,7 +88,8 @@ class TodoController extends Controller
      */
     public function edit($id)
     {
-        //
+        $todo = Todo::findOrFail($id);
+        return view('todos.edit', ['todo' => $todo]);
     }
 
     /**
@@ -99,7 +101,29 @@ class TodoController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $rules =[
+          'title' => "required|string|unique:todos,title,{$id}|min:2|max:191",
+          'body' => 'required|string|min:5|max:1000',
+        ];
+
+        $messages = [
+          'title.unique' => 'Todo title should be unique',
+        ];
+
+        $request -> validate($rules,$messages);
+
+        $todo       = Todo::findOrFail($id);
+
+        $todo ->title =$request->title;
+        $todo ->body =$request->body;
+
+        $todo -> save();
+
+        return redirect()
+        ->route('todos.show', $id)
+        ->with('status','Updated the selected Todo');
+
+
     }
 
     /**
@@ -110,6 +134,11 @@ class TodoController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $todo = Todo::findOrFail($id);
+        $todo ->delete();
+
+        return redirect()
+        ->route('todos.index')
+        ->with('status','Deleted the selected Todo!');
     }
 }
